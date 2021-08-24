@@ -1,35 +1,16 @@
 #!/bin/bash
 set -e
 
-echo "Hello gh-forest!"
+while IFS=+ read -r graph name hash time branch message;do
+whitespaces=$((9-$(sed -nl1000 'l' <<< "$graph" | grep -Eo '\\\\|\||\/|\ |\*|_' | wc -l)))
+whitespaces=$(seq -s' ' $whitespaces|tr -d '[:digit:]')
+graph_all="$graph_all$graph$whitespaces\n"
+hash_all="$hash_all$(printf '%8s' "$hash")  \n"
+time_all="$time_all$(printf '%12s' "$time") \n"
+branch_all="$branch_all$(printf '%40s' "$branch")\n"
+name_all="$name_all$(printf '%15s' "$name")\n"
+message_all="$message_all$message\n"
+done < <(git --no-pager log --all --since="last month" --graph --decorate=short --color --pretty=format:'+%C(auto)%<(15,trunc)%an%C(reset)+%C(bold 214)%<(8,trunc)%h%C(reset)+%C(dim white)%<(12,trunc)%cr%C(reset)+%C(auto)%<(80,trunc)%d%C(reset)+%C(white)%s%C(reset)' && echo);
+graph_all=$(echo "$graph_all" | tr \* o)
+paste -d' ' <(echo -e "$time_all")  <(echo -e "$name_all") <(echo -e "$hash_all") <(echo -e "$graph_all")  <(echo -e "$message_all") <(echo -e "$branch_all")
 
-# Snippets to help get started:
-
-# Determine if an executable is in the PATH
-# if ! type -p ruby >/dev/null; then
-#   echo "Ruby not found on the system" >&2
-#   exit 1
-# fi
-
-# Pass arguments through to another command
-# gh issue list "$@" -R cli/cli
-
-# Using the gh api command to retrieve and format information
-# QUERY='
-#   query($endCursor: String) {
-#     viewer {
-#       repositories(first: 100, after: $endCursor) {
-#         nodes {
-#           nameWithOwner
-#           stargazerCount
-#         }
-#       }
-#     }
-#   }
-# '
-# TEMPLATE='
-#   {{- range $repo := .data.viewer.repositories.nodes -}}
-#     {{- printf "name: %s - stargazers: %v\n" $repo.nameWithOwner $repo.stargazerCount -}}
-#   {{- end -}}
-# '
-# exec gh api graphql -f query="${QUERY}" --paginate --template="${TEMPLATE}"
